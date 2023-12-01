@@ -11,7 +11,7 @@ const wordToDigitMap = new Map([
     ["seven", 7],
     ["eight", 8],
     ["nine", 9],
-])
+]);
 
 function getDigitAtPosition(line: string, index: number): number | undefined {
     if(line.charCodeAt(index) >= "0".charCodeAt(0) && line.charCodeAt(index) <= "9".charCodeAt(0)) {
@@ -25,17 +25,16 @@ function containsSubstringAtPosition(str: string, substring: string, position: n
 }
 
 function getDigitAtPositionAdvanced(line: string, index: number): number | undefined {
-    if(line.charCodeAt(index) >= "0".charCodeAt(0) && line.charCodeAt(index) <= "9".charCodeAt(0)) {
-        return +line.charAt(index);
+    let result = getDigitAtPosition(line, index);
+    if(result !== undefined) {
+        return result;
     }
 
-    let result: undefined | number;
     wordToDigitMap.forEach((value, key) => {
         if(containsSubstringAtPosition(line, key, index)) {
             result = value;
         }
     });
-
     return result;
 }
 
@@ -44,38 +43,27 @@ function getCalibrationValueFromLine(line: string, findDigitCallback: (line: str
     let lastDigit = 0;
     for(let i = 0; i < line.length; i++) {
         const digit = findDigitCallback(line, i);
-        if(digit === undefined) {
+        if(digit === undefined)
             continue;
-        }
 
-        if(firstDigit < 0) {
-            firstDigit = digit;
-        }
+        firstDigit = firstDigit < 0 ? digit : firstDigit;
         lastDigit = digit;
     }
     return firstDigit * 10 + lastDigit;
 }
 
-function printSolution1Part1() {
+function getSolution1(findDigitCallback: (line: string, index: number) => number | undefined) {
     const inputContent = fs.readFileSync('./app/res/week1/input1.txt').toString();
-    
-    const calibrationValues = inputContent.split('\n').map(line => {
-        return getCalibrationValueFromLine(line, getDigitAtPosition);
-    });
+    const calibrationValues = inputContent.split('\n').map(line => getCalibrationValueFromLine(line, findDigitCallback));
+    return calibrationValues.reduce((acc, value) => acc + value);
+}
 
-    const sumOfValues = calibrationValues.reduce((acc, value) => acc + value);
-    console.log(sumOfValues);
+function printSolution1Part1() {
+    console.log(getSolution1(getDigitAtPosition));
 }
 
 function printSolution1Part2() {
-    const inputContent = fs.readFileSync('./app/res/week1/input1.txt').toString();
-    
-    const calibrationValues = inputContent.split('\n').map(line => {
-        return getCalibrationValueFromLine(line, getDigitAtPositionAdvanced);
-    });
-
-    const sumOfValues = calibrationValues.reduce((acc, value) => acc + value);
-    console.log(sumOfValues);
+    console.log(getSolution1(getDigitAtPositionAdvanced));
 }
 
 export function printSolutions1() {
