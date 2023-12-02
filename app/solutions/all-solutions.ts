@@ -1,4 +1,5 @@
 import { printSolutions1 } from './week1/solution1';
+import { printSolutions2 } from './week1/solution2';
 
 function printSolution(day: number, solution: () => void): void {
     console.log(`\nDay ${day}`);
@@ -8,6 +9,7 @@ function printSolution(day: number, solution: () => void): void {
 export function printWeek1Solutions() {
     let day = 1;
     printSolution(day, printSolutions1); day++;
+    printSolution(day, printSolutions2); day++;
 }
 
 export function printAllSolutions() {
