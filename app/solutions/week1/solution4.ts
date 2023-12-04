@@ -59,6 +59,14 @@ class GroupOfIdenticalCards {
   }
 }
 
+function insertCardsCopies(cards: GroupOfIdenticalCards[]) {
+  for(let i = 0; i < cards.length; i++) {
+    for(let j = i + 1; j < i + 1 + cards[i].getNumberOfMatchingNumbers(); j++) {
+      cards[j].addCards(cards[i].getSize());
+    }
+  }
+}
+
 function printSolution4Part1() {
   const inputContent = fs.readFileSync('./app/res/week1/input4.txt').toString();
   const inputLines = inputContent.split('\n');
@@ -71,11 +79,7 @@ function printSolution4Part2() {
   const inputContent = fs.readFileSync('./app/res/week1/input4.txt').toString();
   const inputLines = inputContent.split('\n');
   const cards = inputLines.map(ScratchCard.fromLine).map(card => new GroupOfIdenticalCards(card, 1));
-  for(let i = 0; i < cards.length; i++) {
-    for(let j = i + 1; j < i + 1 + cards[i].getNumberOfMatchingNumbers(); j++) {
-      cards[j].addCards(cards[i].getSize());
-    }
-  }
+  insertCardsCopies(cards);
   const sum = cards.reduce((acc, card) => acc + card.getSize(), 0);
   console.log(sum);
 }
