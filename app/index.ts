@@ -1,3 +1,3 @@
-import { printWeek1Solutions } from "./solutions/all-solutions";
+import { printAllSolutions } from "./solutions/all-solutions";
 
-printWeek1Solutions();
+printAllSolutions();
