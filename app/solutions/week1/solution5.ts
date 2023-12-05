@@ -122,36 +122,25 @@ class Mapping {
 class ParsedInput {
   seeds: number[] = [];
   seedsRanges: Range[] = [];
-  seedToSoil = new Mapping();
-  soilToFertilizer = new Mapping();
-  fertilizerToWater = new Mapping();
-  waterToLight = new Mapping();
-  lightToTemperature = new Mapping();
-  temperatureToHumidity = new Mapping();
-  humidityToLocation = new Mapping();
+  mappings: Mapping[] = [];
 
   constructor() {
     const inputContent = fs.readFileSync('./app/res/week1/input5.txt').toString();
-    const inputSections = inputContent.split('\n\n');
-    this.parseSeeds(inputSections[0]);
-    this.seedToSoil = this.parseMappingSection(inputSections[1]);
-    this.soilToFertilizer = this.parseMappingSection(inputSections[2]);
-    this.fertilizerToWater = this.parseMappingSection(inputSections[3]);
-    this.waterToLight = this.parseMappingSection(inputSections[4]);
-    this.lightToTemperature = this.parseMappingSection(inputSections[5]);
-    this.temperatureToHumidity = this.parseMappingSection(inputSections[6]);
-    this.humidityToLocation = this.parseMappingSection(inputSections[7]);
+    let inputSections = inputContent.split('\n\n');
+    this.parseSeeds(inputSections.splice(0, 1)[0]);
+    this.mappings = inputSections.map(s => this.parseMappingSection(s));
   }
 
   public getLocationForSeed(seed: number): number {
     let currentValue = seed;
-    currentValue = this.seedToSoil.getValueFor(currentValue);
-    currentValue = this.soilToFertilizer.getValueFor(currentValue);
-    currentValue = this.fertilizerToWater.getValueFor(currentValue);
-    currentValue = this.waterToLight.getValueFor(currentValue);
-    currentValue = this.lightToTemperature.getValueFor(currentValue);
-    currentValue = this.temperatureToHumidity.getValueFor(currentValue);
-    return this.humidityToLocation.getValueFor(currentValue);
+    this.mappings.forEach(mapping => currentValue = mapping.getValueFor(currentValue));
+    return currentValue;
+  }
+
+  public applyMappingToRanges(seedRanges: Range[]): Range[] {
+    let currentRanges = seedRanges;
+    this.mappings.forEach(mapping => currentRanges = mapping.applyMapping(currentRanges));
+    return currentRanges;
   }
 
   private parseSeeds(seedsSection: string): void {
@@ -171,21 +160,14 @@ function printSolution5Part1() {
   const input = new ParsedInput();
   const locations = input.seeds.map(seed => input.getLocationForSeed(seed));
   locations.sort((a, b) => a - b);
-  console.log(locations);
+  console.log(locations[0]);
 }
 
 function printSolution5Part2() {
   const input = new ParsedInput();
-  let currentRanges = input.seedsRanges;
-  currentRanges = input.seedToSoil.applyMapping(currentRanges);
-  currentRanges = input.soilToFertilizer.applyMapping(currentRanges);
-  currentRanges = input.fertilizerToWater.applyMapping(currentRanges);
-  currentRanges = input.waterToLight.applyMapping(currentRanges);
-  currentRanges = input.lightToTemperature.applyMapping(currentRanges);
-  currentRanges = input.temperatureToHumidity.applyMapping(currentRanges);
-  currentRanges = input.humidityToLocation.applyMapping(currentRanges);
-  currentRanges.sort((a, b) => a.start - b.start);
-  console.log(currentRanges[0].start);
+  const locationRanges = input.applyMappingToRanges(input.seedsRanges);
+  locationRanges.sort((a, b) => a.start - b.start);
+  console.log(locationRanges[0].start);
 }
 
 export function printSolutions5() {

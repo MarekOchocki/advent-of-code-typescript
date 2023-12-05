@@ -19,5 +19,5 @@ export function printWeek1Solutions() {
 }
 
 export function printAllSolutions() {
-    printSolutions5();
+    printWeek1Solutions();
 }
