@@ -145,7 +145,6 @@ class Hand {
     }
     return 0;
   }
-
 }
 
 function parseInput(cardValueMapping: Map<string, number>): Hand[] {
