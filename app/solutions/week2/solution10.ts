@@ -82,23 +82,38 @@ class Pipe {
 
 class PipeMatrix {
   private pipes: Pipe[][] = []; 
-  public readonly startPipePosition: Vector2i;
+  private loopLength: number;
+  private startPipePosition: Vector2i;
+  private startDirection = new Vector2i(1, 0); // TODO: replace with something that is not input specific
+  private startInsideDirection: Vector2i;
+  private numberOfInsideTiles: number;
 
   constructor() {
     const inputContent = fs.readFileSync('./app/res/week2/input10.txt').toString();
     let inputLines = inputContent.split('\n');
     this.pipes = inputLines.map(line => line.split("").map(c => new Pipe(c)));
     this.startPipePosition = this.findStartPipePosition();
+    this.replaceStartPipeCharWithPipe();
+    this.loopLength = this.findLoopLength();
+    this.markPipesFromLoop();
+    this.startInsideDirection = this.findStartInsideDirection();
+    this.markInsideTiles();
+    this.numberOfInsideTiles = this.findNumberOfInsideTiles();
   }
 
-  public getElement(position: Vector2i): Pipe {
-    if(position.x < 0 || position.y < 0 || position.y >= this.pipes.length || position.x >= this.pipes[0].length) {
-      throw "unexpected get element outside of boundaries";
-    }
+  public getLoopLength(): number {
+    return this.loopLength;
+  }
+
+  public getNumberOfInsideTiles(): number {
+    return this.numberOfInsideTiles;
+  }
+
+  private getElement(position: Vector2i): Pipe {
     return this.pipes[position.y][position.x];
   }
 
-  public forEachTile(callback: (pipe: Pipe) => void): void {
+  private forEachTile(callback: (pipe: Pipe) => void): void {
     for(let i = 0; i < this.pipes.length; i++) {
       for(let j = 0; j < this.pipes[i].length; j++) {
         callback(this.pipes[i][j]);
@@ -106,7 +121,18 @@ class PipeMatrix {
     }
   }
 
-  public forEachNonLoopPipeInDirection(from: Vector2i, direction: Vector2i, callback: (pipe: Pipe) => void): void {
+  private forEachLoopPipe(callback: (pipe: Pipe, fromDirection: Vector2i, position: Vector2i) => void): void {
+    let currentPosition = this.startPipePosition;
+    let currentDirection = this.startDirection;
+    do {
+      currentPosition = currentPosition.add(currentDirection);
+      let currentPipe = this.getElement(currentPosition);
+      callback(currentPipe, currentDirection, currentPosition);
+      currentDirection = currentPipe.getNextDirection(currentDirection);
+    } while(!currentPosition.equals(this.startPipePosition))
+  }
+
+  private forEachNonLoopPipeInDirection(from: Vector2i, direction: Vector2i, callback: (pipe: Pipe) => void): void {
     let currentPosition = from.add(direction);
     let currentPipe = this.getElement(currentPosition);
     while(!currentPipe.isPartOfLoop()) {
@@ -116,92 +142,70 @@ class PipeMatrix {
     }
   }
 
+  private replaceStartPipeCharWithPipe(): void {
+    this.getElement(this.startPipePosition).pipeChar = "-"; // TODO: replace with something that is not input specific
+  }
+
   private findStartPipePosition(): Vector2i {
     for(let i = 0; i < this.pipes.length; i++) {
       for(let j = 0; j < this.pipes[i].length; j++) {
         if(this.pipes[i][j].pipeChar === "S") {
-          this.pipes[i][j].pipeChar = "-"; // TODO: replace with something that is not input specific
           return new Vector2i(j, i);
         }
       }
     }
     return new Vector2i(0, 0);
   }
-}
 
-
-function printSolution10Part1() {
-  const pipeMatrix = new PipeMatrix();
-  let steps = 0;
-  let currentPosition = pipeMatrix.startPipePosition;
-  let currentDirection = new Vector2i(1, 0); // TODO: replace with something that is not input specific
-  do {
-    currentPosition = currentPosition.add(currentDirection);
-    let currentPipe = pipeMatrix.getElement(currentPosition);
-    currentDirection = currentPipe.getNextDirection(currentDirection);
-    steps++; 
-  } while(!currentPosition.equals(pipeMatrix.startPipePosition))
-  console.log(steps / 2);
-}
-
-function getInsideDirection(numberOfClockwiseTurns: number): Vector2i {
-  if(numberOfClockwiseTurns < 0) {
-    return new Vector2i(1, 0).rotate(Rotation.Counterclockwise); // TODO: replace with something that is not input specific
+  private findLoopLength(): number {
+    let steps = 0;
+    this.forEachLoopPipe(_ => steps++);
+    return steps;
   }
-  return new Vector2i(1, 0).rotate(Rotation.Clockwise); // TODO: replace with something that is not input specific
-}
 
-function printSolution10Part2() {
-  const pipeMatrix = new PipeMatrix();
-  let currentPosition = pipeMatrix.startPipePosition;
-  let currentDirection = new Vector2i(1, 0); // TODO: replace with something that is not input specific
-  let numberOfClockwiseTurns = 0;
-  do {
-    currentPosition = currentPosition.add(currentDirection);
-    let currentPipe = pipeMatrix.getElement(currentPosition);
-    currentPipe.markAsLoop();
-    let rotation = currentPipe.getRotationToNextDireciton(currentDirection);
-    if(rotation === Rotation.Clockwise) {
-      numberOfClockwiseTurns++;
+  private markPipesFromLoop(): void {
+    this.forEachLoopPipe(pipe => pipe.markAsLoop());
+  }
+
+  private findStartInsideDirection(): Vector2i {
+    let numberOfClockwiseTurns = this.findNumberOfClockwiseTurns();
+    if(numberOfClockwiseTurns < 0) {
+      return this.startDirection.rotate(Rotation.Counterclockwise);
     }
-    if(rotation === Rotation.Counterclockwise) {
-      numberOfClockwiseTurns--;
-    }
-    currentDirection = currentPipe.getNextDirection(currentDirection);
-  } while(!currentPosition.equals(pipeMatrix.startPipePosition))
+    return this.startDirection.rotate(Rotation.Clockwise);
+  }
 
-  // 1. parse input
-  // 2. mark all pipes that belong to the main loop
-  // 4. count every clockwise and counterclockwise turn to determine which direction from start is the inside
+  private findNumberOfClockwiseTurns(): number {
+    let numberOfClockwiseTurns = 0;
+    this.forEachLoopPipe((pipe, from) => {
+      let rotation = pipe.getRotationToNextDireciton(from);
+      if(rotation === undefined) return;
+      numberOfClockwiseTurns += rotation === Rotation.Clockwise ? 1 : -1;
+    });
+    return numberOfClockwiseTurns;
+  }
 
-  let insideDirection = getInsideDirection(numberOfClockwiseTurns);
-  currentPosition = pipeMatrix.startPipePosition;
-  currentDirection = new Vector2i(1, 0); // TODO: replace with something that is not input specific
-  pipeMatrix.forEachNonLoopPipeInDirection(currentPosition, insideDirection, (pipe) => pipe.markAsInside());
-  do {
-    currentPosition = currentPosition.add(currentDirection);
-    let currentPipe = pipeMatrix.getElement(currentPosition);
-    if(!currentPipe) { throw "Error!"; }
-    pipeMatrix.forEachNonLoopPipeInDirection(currentPosition, insideDirection, (pipe) => pipe.markAsInside());
-    let rotation = currentPipe.getRotationToNextDireciton(currentDirection);
-    if(rotation !== undefined) {
-      insideDirection = insideDirection.rotate(rotation);
-      pipeMatrix.forEachNonLoopPipeInDirection(currentPosition, insideDirection, (pipe) => pipe.markAsInside());
-    }
-    currentDirection = currentPipe.getNextDirection(currentDirection);
-  } while(!currentPosition.equals(pipeMatrix.startPipePosition))
+  private markInsideTiles(): void {
+    let insideDirection = this.startInsideDirection;
+    this.forEachLoopPipe((currentPipe, from, currentPosition) => {
+      this.forEachNonLoopPipeInDirection(currentPosition, insideDirection, (pipe) => pipe.markAsInside());
+      let rotation = currentPipe.getRotationToNextDireciton(from);
+      if(rotation !== undefined) {
+        insideDirection = insideDirection.rotate(rotation);
+        this.forEachNonLoopPipeInDirection(currentPosition, insideDirection, (pipe) => pipe.markAsInside());
+      }
+    });
+  }
 
-  // 5. traverse the main loop and mark everything in inside direction as inside (every turn needs to also turn the inside_direction_vector)
-
-  let insideTilesNumber = 0;
-  pipeMatrix.forEachTile(pipe => insideTilesNumber += pipe.isInside() ? 1 : 0);
-  console.log(insideTilesNumber);
-
-  // 6. count all non-loop fields marked "inside"
-  // 7. print result
+  private findNumberOfInsideTiles(): number {
+    let insideTilesNumber = 0;
+    this.forEachTile(pipe => insideTilesNumber += pipe.isInside() ? 1 : 0);
+    return insideTilesNumber;
+  }
 }
 
 export function printSolutions10() {
-  printSolution10Part1();
-  printSolution10Part2();
+  const pipeMatrix = new PipeMatrix();
+  console.log(pipeMatrix.getLoopLength() / 2);
+  console.log(pipeMatrix.getNumberOfInsideTiles());
 }
