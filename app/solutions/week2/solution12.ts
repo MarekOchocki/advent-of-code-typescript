@@ -69,8 +69,9 @@ class RecordLine {
   }
 
   unfold(): RecordLine {
-    const newRecord = `${this.record}?${this.record}?${this.record}?${this.record}?${this.record}`;
-    const newGroups = [...this.damagedSpringGroups, ...this.damagedSpringGroups, ...this.damagedSpringGroups, ...this.damagedSpringGroups, ...this.damagedSpringGroups];
+    const numberOfCopies = 5;
+    const newRecord = new Array(numberOfCopies).fill("?").map(s => s + this.record).reduce((acc, s) => acc + s).slice(1);
+    const newGroups = new Array(numberOfCopies).fill(0).map(_ => this.damagedSpringGroups).reduce((acc, g) => [...acc, ...g]);
     return new RecordLine(newRecord, newGroups);
   }
 }
