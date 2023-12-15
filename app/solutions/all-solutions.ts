@@ -11,6 +11,7 @@ import { printSolutions10 } from './week2/solution10';
 import { printSolutions11 } from './week2/solution11';
 import { printSolutions12 } from './week2/solution12';
 import { printSolutions13 } from './week2/solution13';
+import { printSolutions14 } from './week2/solution14';
 
 function printSolution(day: number, solution: () => void): void {
   console.log(`\nDay ${day}`);
@@ -37,7 +38,8 @@ export function printWeek2Solutions() {
     printSolutions10,
     printSolutions11,
     printSolutions12,
-    printSolutions13
+    printSolutions13,
+    printSolutions14
   ]
   solutions.forEach((sol, i) => printSolution(i + 8, sol));
 }
