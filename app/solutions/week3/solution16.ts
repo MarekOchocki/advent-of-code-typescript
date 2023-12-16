@@ -1,48 +1,6 @@
 import * as fs from 'fs';
-
-enum Rotation {
-  Clockwise,
-  Counterclockwise
-}
-
-class Vector2 {
-  constructor(public x: number, public y: number) { }
-
-  public add(other: Vector2): Vector2 {
-    return new Vector2(this.x + other.x, this.y + other.y);
-  }
-
-  public subtract(other: Vector2): Vector2 {
-    return new Vector2(this.x - other.x, this.y - other.y);
-  }
-
-  public equals(other: Vector2): boolean {
-    return this.x === other.x && this.y === other.y;
-  }
-
-  public rotate(rotation: Rotation): Vector2 {
-    if(rotation === Rotation.Clockwise) {
-      return new Vector2(-this.y, this.x);
-    }
-    return new Vector2(this.y, -this.x);
-  }
-
-  public static Right(): Vector2 {
-    return new Vector2(1, 0);
-  }
-
-  public static Left(): Vector2 {
-    return new Vector2(-1, 0);
-  }
-
-  public static Up(): Vector2 {
-    return new Vector2(0, -1);
-  }
-
-  public static Down(): Vector2 {
-    return new Vector2(0, 1);
-  }
-}
+import { Rotation, Vector2 } from '../utils/Vector2';
+import { Matrix } from '../utils/Matrix';
 
 class Tile {
   private energizedDirections = [false, false, false, false];
@@ -73,47 +31,25 @@ class Tile {
   }
 }
 
-class Matrix<T> {
-  private constructor(private elements: T[][]) { }
-  static from2DArray<T>(elements: T[][]): Matrix<T> {
-    return new Matrix<T>(elements);
-  }
-
-  get(position: Vector2): T {
-    return this.elements[position.y][position.x];
-  }
-}
-
-function forEach2D<T>(array2D: T[][], callback: (t: T) => void): void {
-  array2D.forEach(line => line.forEach(el => callback(el)));
-}
-
-function map2D<T, R>(array2D: T[][], callback: (t: T) => R): R[][] {
-  return array2D.map(line => line.map(el => callback(el)));
-}
-
-function sum2D(numbers: number[][]): number {
-  return numbers.reduce((acc, line) => acc + line.reduce((accIn, el) => accIn + el), 0);
-}
-
-function parseInput(): Tile[][] {
+function parseInput(): Matrix<Tile> {
   const inputContent = fs.readFileSync('./app/res/week3/input16.txt').toString();
-  return inputContent.split("\n").map(line => line.split("").map(c => new Tile(c)));
+  return Matrix.fromString(inputContent, c => new Tile(c));
 }
 
-function processBeam(tiles: Tile[][], source: Vector2, direction: Vector2): void {
-  if(tiles[source.y] !== undefined && tiles[source.y][source.x] !== undefined) {
-    if(tiles[source.y][source.x].isEnergizedInDirection(direction)) { return; }
-    tiles[source.y][source.x].energize(direction);
+function processBeam(tiles: Matrix<Tile>, source: Vector2, direction: Vector2): void {
+  const sourceTile = tiles.get(source);
+  if(sourceTile !== undefined) {
+    if(sourceTile.isEnergizedInDirection(direction)) { return; }
+    sourceTile.energize(direction);
   }
   const destination = source.add(direction);
-  if(tiles[destination.y] === undefined || tiles[destination.y][destination.x] === undefined) { return; }
-  const destTile = tiles[destination.y][destination.x];
-  if(destTile.tileChar === ".") {
+  const destinationTile = tiles.get(destination);
+  if(destinationTile === undefined) { return; }
+  if(destinationTile.tileChar === ".") {
     processBeam(tiles, destination, direction);
     return;
   }
-  if(destTile.tileChar === "/") {
+  if(destinationTile.tileChar === "/") {
     if(direction.equals(Vector2.Right()) || direction.equals(Vector2.Left())) {
       processBeam(tiles, destination, direction.rotate(Rotation.Counterclockwise));
     } else {
@@ -121,7 +57,7 @@ function processBeam(tiles: Tile[][], source: Vector2, direction: Vector2): void
     }
     return;
   }
-  if(destTile.tileChar === "\\") {
+  if(destinationTile.tileChar === "\\") {
     if(direction.equals(Vector2.Right()) || direction.equals(Vector2.Left())) {
       processBeam(tiles, destination, direction.rotate(Rotation.Clockwise));
     } else {
@@ -129,7 +65,7 @@ function processBeam(tiles: Tile[][], source: Vector2, direction: Vector2): void
     }
     return;
   }
-  if(destTile.tileChar === "-") {
+  if(destinationTile.tileChar === "-") {
     if(direction.equals(Vector2.Right()) || direction.equals(Vector2.Left())) {
       processBeam(tiles, destination, direction);
     } else {
@@ -138,7 +74,7 @@ function processBeam(tiles: Tile[][], source: Vector2, direction: Vector2): void
     }
     return;
   }
-  if(destTile.tileChar === "|") {
+  if(destinationTile.tileChar === "|") {
     if(direction.equals(Vector2.Up()) || direction.equals(Vector2.Down())) {
       processBeam(tiles, destination, direction);
     } else {
@@ -149,10 +85,11 @@ function processBeam(tiles: Tile[][], source: Vector2, direction: Vector2): void
   }
 }
 
-function getResultForStartingBeam(tiles: Tile[][], source: Vector2, direction: Vector2): number {
+function getResultForStartingBeam(tiles: Matrix<Tile>, source: Vector2, direction: Vector2): number {
   processBeam(tiles, source, direction);
-  const result = sum2D(map2D(tiles, t => t.isEnergized() ? 1 : 0));
-  forEach2D(tiles, t => t.reset());
+  let result = 0;
+  tiles.forEach(t => result += t.isEnergized() ? 1 : 0);
+  tiles.forEach(t => t.reset());
   return result;
 }
 
@@ -165,14 +102,14 @@ function printSolution16Part1() {
 function printSolution16Part2() {
   const tiles = parseInput();
   let max = 0;
-  for(let y = 0; y < tiles.length; y++) {
+  for(let y = 0; y < tiles.getSize().y; y++) {
     const resultRight = getResultForStartingBeam(tiles, new Vector2(-1, y), Vector2.Right());
-    const resultLeft = getResultForStartingBeam(tiles, new Vector2(tiles[0].length, y), Vector2.Left());
+    const resultLeft = getResultForStartingBeam(tiles, new Vector2(tiles.getSize().x, y), Vector2.Left());
     max = Math.max(max, resultRight, resultLeft);
   }
-  for(let x = 0; x < tiles[0].length; x++) {
+  for(let x = 0; x < tiles.getSize().x; x++) {
     const resultDown = getResultForStartingBeam(tiles, new Vector2(x, -1), Vector2.Down());
-    const resultUp = getResultForStartingBeam(tiles, new Vector2(x, tiles.length), Vector2.Up());
+    const resultUp = getResultForStartingBeam(tiles, new Vector2(x, tiles.getSize().y), Vector2.Up());
     max = Math.max(max, resultDown, resultUp);
   }
   console.log(max);

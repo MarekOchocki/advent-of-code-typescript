@@ -1,40 +1,13 @@
 import * as fs from 'fs';
+import { Rotation, Vector2 } from '../utils/Vector2';
 
-class Vector2i {
-  constructor(public x: number, public y: number) { }
-
-  public add(other: Vector2i): Vector2i {
-    return new Vector2i(this.x + other.x, this.y + other.y);
-  }
-
-  public subtract(other: Vector2i): Vector2i {
-    return new Vector2i(this.x - other.x, this.y - other.y);
-  }
-
-  public equals(other: Vector2i): boolean {
-    return this.x === other.x && this.y === other.y;
-  }
-
-  public rotate(rotation: Rotation): Vector2i {
-    if(rotation === Rotation.Clockwise) {
-      return new Vector2i(-this.y, this.x);
-    }
-    return new Vector2i(this.y, -this.x);
-  }
-}
-
-enum Rotation {
-  Clockwise,
-  Counterclockwise
-}
-
-const pipeToVectorMap = new Map<string, Vector2i>([
-  ["|", new Vector2i(0, 0)],
-  ["-", new Vector2i(0, 0)],
-  ["F", new Vector2i(1, 1)],
-  ["J", new Vector2i(-1, -1)],
-  ["L", new Vector2i(1, -1)],
-  ["7", new Vector2i(-1, 1)]
+const pipeToVectorMap = new Map<string, Vector2>([
+  ["|", new Vector2(0, 0)],
+  ["-", new Vector2(0, 0)],
+  ["F", new Vector2(1, 1)],
+  ["J", new Vector2(-1, -1)],
+  ["L", new Vector2(1, -1)],
+  ["7", new Vector2(-1, 1)]
 ]);
 
 class Pipe {
@@ -60,11 +33,11 @@ class Pipe {
     return this.isMarkedAsLoop;
   }
 
-  public getNextDirection(from: Vector2i): Vector2i {
+  public getNextDirection(from: Vector2): Vector2 {
     return this.getVectorForPipe().add(from);
   }
 
-  public getRotationToNextDireciton(from: Vector2i): Rotation | undefined {
+  public getRotationToNextDireciton(from: Vector2): Rotation | undefined {
     const nextDirection = this.getNextDirection(from);
     if(from.rotate(Rotation.Clockwise).equals(nextDirection)) {
       return Rotation.Clockwise;
@@ -75,17 +48,17 @@ class Pipe {
     return undefined;
   }
   
-  private getVectorForPipe(): Vector2i {
-    return pipeToVectorMap.get(this.pipeChar) as Vector2i;
+  private getVectorForPipe(): Vector2 {
+    return pipeToVectorMap.get(this.pipeChar) as Vector2;
   }
 }
 
 class PipeMatrix {
   private pipes: Pipe[][] = []; 
   private loopLength: number;
-  private startPipePosition: Vector2i;
-  private startDirection = new Vector2i(1, 0); // TODO: replace with something that is not input specific
-  private startInsideDirection: Vector2i;
+  private startPipePosition: Vector2;
+  private startDirection = new Vector2(1, 0); // TODO: replace with something that is not input specific
+  private startInsideDirection: Vector2;
   private numberOfInsideTiles: number;
 
   constructor() {
@@ -109,7 +82,7 @@ class PipeMatrix {
     return this.numberOfInsideTiles;
   }
 
-  private getElement(position: Vector2i): Pipe {
+  private getElement(position: Vector2): Pipe {
     return this.pipes[position.y][position.x];
   }
 
@@ -121,7 +94,7 @@ class PipeMatrix {
     }
   }
 
-  private forEachLoopPipe(callback: (pipe: Pipe, fromDirection: Vector2i, position: Vector2i) => void): void {
+  private forEachLoopPipe(callback: (pipe: Pipe, fromDirection: Vector2, position: Vector2) => void): void {
     let currentPosition = this.startPipePosition;
     let currentDirection = this.startDirection;
     do {
@@ -132,7 +105,7 @@ class PipeMatrix {
     } while(!currentPosition.equals(this.startPipePosition))
   }
 
-  private forEachNonLoopPipeInDirection(from: Vector2i, direction: Vector2i, callback: (pipe: Pipe) => void): void {
+  private forEachNonLoopPipeInDirection(from: Vector2, direction: Vector2, callback: (pipe: Pipe) => void): void {
     let currentPosition = from.add(direction);
     let currentPipe = this.getElement(currentPosition);
     while(!currentPipe.isPartOfLoop()) {
@@ -146,15 +119,15 @@ class PipeMatrix {
     this.getElement(this.startPipePosition).pipeChar = "-"; // TODO: replace with something that is not input specific
   }
 
-  private findStartPipePosition(): Vector2i {
+  private findStartPipePosition(): Vector2 {
     for(let i = 0; i < this.pipes.length; i++) {
       for(let j = 0; j < this.pipes[i].length; j++) {
         if(this.pipes[i][j].pipeChar === "S") {
-          return new Vector2i(j, i);
+          return new Vector2(j, i);
         }
       }
     }
-    return new Vector2i(0, 0);
+    return new Vector2(0, 0);
   }
 
   private findLoopLength(): number {
@@ -167,7 +140,7 @@ class PipeMatrix {
     this.forEachLoopPipe(pipe => pipe.markAsLoop());
   }
 
-  private findStartInsideDirection(): Vector2i {
+  private findStartInsideDirection(): Vector2 {
     let numberOfClockwiseTurns = this.findNumberOfClockwiseTurns();
     if(numberOfClockwiseTurns < 0) {
       return this.startDirection.rotate(Rotation.Counterclockwise);
