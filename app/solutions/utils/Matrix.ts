@@ -16,6 +16,10 @@ export class Matrix<T> {
     return new Matrix<T>(elements);
   }
 
+  isInside(position: Vector2): boolean {
+    return position.x >= 0 && position.x < this.size.x && position.y >= 0 && position.y < this.size.y;
+  }
+
   getSize(): Vector2 {
     return this.size;
   }
