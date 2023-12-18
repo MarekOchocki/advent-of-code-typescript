@@ -41,14 +41,14 @@ function parseInput(): InputEntry[] {
 function printSolution18Part1(): void {
   const entries = parseInput();
   const sides = entries.map(e => new GridPoligonSide(e.direction, e.length));
-  const poligon = new GridPoligon(new Vector2(0, 0), sides);
+  const poligon = new GridPoligon(sides);
   console.log(poligon.perimeter + poligon.area);
 }
 
 function printSolution18Part2() {
   const entries = parseInput();
   const sides = entries.map(e => new GridPoligonSide(e.direction2, e.length2));
-  const poligon = new GridPoligon(new Vector2(0, 0), sides);
+  const poligon = new GridPoligon(sides);
   console.log(poligon.perimeter + poligon.area);
 }
 
