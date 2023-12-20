@@ -22,6 +22,7 @@ type ModulePulse = {from: string, to: string, pulse: PulseType};
 interface Module {
   getName(): string;
   getType(): ModuleType;
+  getOutputs(): string[];
   receivePulse(inputName: string, pulse: PulseType): ModulePulse[];
   getNumberOfLowPulses(): number;
   getNumberOfHighPulses(): number;
@@ -44,6 +45,16 @@ class ConjunctionModule implements Module {
 
   getType(): ModuleType {
     return ModuleType.Conjunction;
+  }
+
+  getOutputs(): string[] {
+    return this.outputs;
+  }
+
+  getInputs(): string[] {
+    const keys: string[] = [];
+    this.inputs.forEach((v, key) => keys.push(key));
+    return keys;
   }
 
   receivePulse(inputName: string, pulse: PulseType): ModulePulse[] {
@@ -86,6 +97,10 @@ class FlipFlopModule implements Module {
     return this.name;
   }
 
+  getOutputs(): string[] {
+    return this.outputs;
+  }
+
   receivePulse(inputName: string, pulse: PulseType): ModulePulse[] {
     if(pulse === PulseType.High) { return []; }
     this.isOn = !this.isOn;
@@ -122,6 +137,10 @@ class BroadcastModule implements Module {
 
   getName(): string {
     return this.name;
+  }
+
+  getOutputs(): string[] {
+    return this.outputs;
   }
 
   receivePulse(inputName: string, pulse: PulseType): ModulePulse[] {
@@ -173,6 +192,10 @@ class ModuleFactory {
     });
   }
 
+  static isConjunctionModule(module: Module): module is ConjunctionModule {
+    return module.getType() === ModuleType.Conjunction;
+  }
+
   private static fromInputLine(line: string): Module {
     const [inputPart, outputsPart] = line.split(" -> ");
     const outputs = outputsPart.split(", ");
@@ -184,19 +207,20 @@ class ModuleFactory {
     }
     return new BroadcastModule(outputs);
   }
-
-  private static isConjunctionModule(module: Module): module is ConjunctionModule {
-    return module.getType() === ModuleType.Conjunction;
-  }
 }
 
 class ParsedInput {
   modules: Module[] = [];
   private buttonPresses = 0;
+  private importantNode1 = "";
+  private importantNode2 = "";
+  private importantNode3 = "";
+  private importantNode4 = "";
 
   constructor() {
     const inputContent = fs.readFileSync('./app/res/week3/input20.txt').toString();
     this.modules = ModuleFactory.fromInputString(inputContent);
+    this.findNamesOfImportantNodes();
   }
 
   public getPulseCount(): PulsesCounter {
@@ -210,28 +234,33 @@ class ParsedInput {
   }
 
   public calculateCycles(): number[] {
-    let lmCycle = 0;
-    let dbCycle = 0;
-    let dhCycle = 0;
-    let sgCycle = 0;
+    let importantNode1Cycle = 0;
+    let importantNode2Cycle = 0;
+    let importantNode3Cycle = 0;
+    let importantNode4Cycle = 0;
 
     let currentModules: ModulePulse[] = [{from: "button", to: "broadcaster", pulse: PulseType.Low}];
     this.buttonPresses++;
 
-    while(lmCycle === 0 || dbCycle === 0 || dhCycle === 0 || sgCycle === 0) {
+    while(importantNode1Cycle === 0 || importantNode2Cycle === 0 || importantNode3Cycle === 0 || importantNode4Cycle === 0) {
       const modulePulse = currentModules.splice(0, 1)[0];
-      if(modulePulse.to === "lm" && modulePulse.pulse === PulseType.Low && lmCycle === 0) {
-        lmCycle = this.buttonPresses;
+
+      if(modulePulse.to === this.importantNode1 && modulePulse.pulse === PulseType.Low && importantNode1Cycle === 0) {
+        importantNode1Cycle = this.buttonPresses;
       }
-      if(modulePulse.to === "db" && modulePulse.pulse === PulseType.Low && dbCycle === 0) {
-        dbCycle = this.buttonPresses;
+
+      if(modulePulse.to === this.importantNode2 && modulePulse.pulse === PulseType.Low && importantNode2Cycle === 0) {
+        importantNode2Cycle = this.buttonPresses;
       }
-      if(modulePulse.to === "dh" && modulePulse.pulse === PulseType.Low && dhCycle === 0) {
-        dhCycle = this.buttonPresses;
+
+      if(modulePulse.to === this.importantNode3 && modulePulse.pulse === PulseType.Low && importantNode3Cycle === 0) {
+        importantNode3Cycle = this.buttonPresses;
       }
-      if(modulePulse.to === "sg" && modulePulse.pulse === PulseType.Low && sgCycle === 0) {
-        sgCycle = this.buttonPresses
+
+      if(modulePulse.to === this.importantNode4 && modulePulse.pulse === PulseType.Low && importantNode4Cycle === 0) {
+        importantNode4Cycle = this.buttonPresses
       }
+
       currentModules.push(...this.sendPulseTo(modulePulse));
       if(currentModules.length === 0) {
         currentModules = [{from: "button", to: "broadcaster", pulse: PulseType.Low}];
@@ -239,7 +268,7 @@ class ParsedInput {
       }
     }
 
-    return [lmCycle, dbCycle, dhCycle, sgCycle];
+    return [importantNode1Cycle, importantNode2Cycle, importantNode3Cycle, importantNode4Cycle];
   }
 
   public pressButton(): void {
@@ -249,6 +278,17 @@ class ParsedInput {
     while(currentModules.length !== 0) {
       const modulePulse = currentModules.splice(0, 1)[0];
       currentModules.push(...this.sendPulseTo(modulePulse));
+    }
+  }
+
+  private findNamesOfImportantNodes(): void {
+    const moduleBeforeRx = this.modules.find(m => m.getOutputs().some(o => o === "rx")) as Module;
+    if(ModuleFactory.isConjunctionModule(moduleBeforeRx)) {
+      const importantNodes = moduleBeforeRx.getInputs();
+      this.importantNode1 = importantNodes[0];
+      this.importantNode2 = importantNodes[1];
+      this.importantNode3 = importantNodes[2];
+      this.importantNode4 = importantNodes[3];
     }
   }
 
