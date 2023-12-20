@@ -196,7 +196,6 @@ class ParsedInput {
   acceptedCombinationsNumber = 0;
 
   constructor() {
-    performance.mark("a");
     const inputContent = fs.readFileSync('./app/res/week3/input19.txt').toString();
     const [workflowsInput, partsInput] = inputContent.split("\n\n");
     this.parts = partsInput.split("\n").map(line => new MachinePart(line));
