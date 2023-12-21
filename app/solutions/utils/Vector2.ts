@@ -15,6 +15,10 @@ export class Vector2 {
     return new Vector2(this.x - other.x, this.y - other.y);
   }
 
+  public divide(divisor: number): Vector2 {
+    return new Vector2(this.x / divisor, this.y / divisor);
+  }
+
   public equals(other: Vector2): boolean {
     return this.x === other.x && this.y === other.y;
   }

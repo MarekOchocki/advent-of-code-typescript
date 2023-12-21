@@ -41,11 +41,28 @@ export class Matrix<T> {
     }
   }
 
-  forEach(callback: (t: T) => void): void {
-    this.elements.forEach(line => line.forEach(el => callback(el)));
+  forEach(callback: (t: T, position: Vector2) => void): void {
+    this.elements.forEach((line, y) => line.forEach((el, x) => callback(el, new Vector2(x, y))));
   }
   
   map<R>(callback: (t: T) => R): R[][] {
     return this.elements.map(line => line.map(el => callback(el)));
   }
+}
+
+export interface Copyable<T> {
+  copy(): T;
+}
+
+export function copyMatrix<T extends Copyable<T>>(matrix: Matrix<T>): Matrix<T> {
+  const elementsCopy: T[][] = [];
+  const size = matrix.getSize();
+  for(let y = 0; y < size.y; y++) {
+    elementsCopy.push([]);
+    for(let x = 0; x < size.x; x++) {
+      const element = matrix.get(new Vector2(x, y)) as T;
+      elementsCopy[elementsCopy.length - 1].push(element.copy());
+    }
+  }
+  return Matrix.from2DArray(elementsCopy);
 }
