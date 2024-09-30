@@ -16,6 +16,18 @@ export class Matrix<T> {
     return new Matrix<T>(elements);
   }
 
+  static fromDimensions<T>(size: Vector2, defaultValueFactory: () => T): Matrix<T> {
+    const elements: T[][] = [];
+    for(let y = 0; y < size.y; y++) {
+      const newRow: T[] = [];
+      for(let x = 0; x < size.x; x++) {
+        newRow.push(defaultValueFactory());
+      }
+      elements.push(newRow);
+    }
+    return new Matrix<T>(elements);
+  }
+
   isInside(position: Vector2): boolean {
     return position.x >= 0 && position.x < this.size.x && position.y >= 0 && position.y < this.size.y;
   }
