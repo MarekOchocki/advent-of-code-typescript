@@ -20,6 +20,7 @@ import { printSolutions19 } from './week3/solution19';
 import { printSolutions20 } from './week3/solution20';
 import { printSolutions21 } from './week3/solution21';
 import { printSolutions22 } from './week4/solution22';
+import { printSolutions24 } from './week4/solution24';
 
 function printSolution(day: number, solution: () => void): void {
   console.log(`\nDay ${day}`);
