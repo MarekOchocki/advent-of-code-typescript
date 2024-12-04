@@ -1,3 +1,3 @@
-# advent-of-code-2023
+# advent-of-code-typescript
 
 https://adventofcode.com
