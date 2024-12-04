@@ -60,6 +60,14 @@ export class Matrix<T> {
   map<R>(callback: (t: T) => R): R[][] {
     return this.elements.map(line => line.map(el => callback(el)));
   }
+  
+  reduce<U>(callbackfn: (previousValue: U, currentValue: T, currentPosition: Vector2, grid: Matrix<T>) => U, initialValue: U): U {
+    let currentAccumulator = initialValue;
+    this.forEach((value, position) => {
+      currentAccumulator = callbackfn(currentAccumulator, value, position, this);
+    });
+    return currentAccumulator;
+  }
 }
 
 export interface Copyable<T> {
