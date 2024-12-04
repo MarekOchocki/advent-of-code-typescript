@@ -30,14 +30,14 @@ class Solver {
   }
 
   public getNumberOfWordCrosses(word: string): number {
-    return this.grid.reduce((acc, _, position) => acc + (this.isPositionAMiddleOfWord(position, word) ? 1 : 0), 0);
+    return this.grid.reduce((acc, _, position) => acc + (this.isPositionAMiddleOfWordCross(position, word) ? 1 : 0), 0);
   }
 
-  public getNumberOfWordsStartingAt(position: Vector2, word: string): number {
+  private getNumberOfWordsStartingAt(position: Vector2, word: string): number {
     return this.allDirections.reduce((acc, direction) => acc + (this.isWordInDirection(position, direction, word) ? 1 : 0), 0);
   }
 
-  private isPositionAMiddleOfWord(position: Vector2, word: string): boolean {
+  private isPositionAMiddleOfWordCross(position: Vector2, word: string): boolean {
     let sum = this.diagonalDirections.reduce((acc, direction) => {
       return acc + (this.isWordInDirection(position.add(direction), direction.reverse(), word) ? 1 : 0)
     }, 0);
