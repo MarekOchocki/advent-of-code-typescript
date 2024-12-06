@@ -37,10 +37,14 @@ export class Matrix<T> {
   }
 
   get(position: Vector2): T | undefined {
-    if(position.y >= this.elements.length || position.y < 0) {
+    if(position.y >= this.elements.length || position.y < 0 || position.x >= this.size.x || position.x < 0) {
       return undefined;
     }
     return this.elements[position.y][position.x];
+  }
+
+  set(position: Vector2, newValue: T): void {
+    this.elements[position.y][position.x] = newValue;
   }
 
   getLine(y: number): T[] {
@@ -60,6 +64,25 @@ export class Matrix<T> {
   map<R>(callback: (t: T) => R): R[][] {
     return this.elements.map(line => line.map(el => callback(el)));
   }
+
+  find(callback: (val: T) => boolean): T | undefined {
+    const position = this.findPosition(callback);
+    if(position === undefined) {
+      return undefined;
+    }
+    return this.get(position);
+  }
+
+  findPosition(callback: (val: T) => boolean): Vector2 | undefined {
+    for(let y = 0; y < this.elements.length; y++) {
+      for(let x = 0; x < this.elements[y].length; x++) {
+        if(callback(this.elements[y][x])) {
+          return new Vector2(x, y);
+        }
+      }
+    }
+    return undefined;
+  }
   
   reduce<U>(callbackfn: (previousValue: U, currentValue: T, currentPosition: Vector2, grid: Matrix<T>) => U, initialValue: U): U {
     let currentAccumulator = initialValue;
@@ -67,6 +90,14 @@ export class Matrix<T> {
       currentAccumulator = callbackfn(currentAccumulator, value, position, this);
     });
     return currentAccumulator;
+  }
+
+  toString(elementToChar: (el: T) => string): string {
+    return this.elements.map(row => this.rowToString(elementToChar, row)).join('\n');
+  }
+
+  private rowToString(elementToChar: (el: T) => string, row: T[]): string {
+    return row.map(elementToChar).join('');
   }
 }
 
