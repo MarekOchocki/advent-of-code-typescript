@@ -38,7 +38,7 @@ function parseInput(): ParsedInput {
 
 function makeNextValidPositions(map: Matrix<Tile>, source: Vector2): Vector2[] {
   const nextPositions: Vector2[] = [];
-  Vector2.forEach(direction => {
+  Vector2.forEachDirection(direction => {
     const position = source.add(direction);
     const tile = map.get(position);
     if(tile === undefined || tile.type === TileType.Rock) return;

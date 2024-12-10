@@ -1,10 +1,11 @@
+import { Stringifiable } from "./interfaces/stringifiable.interface";
 
 export enum Rotation {
   Clockwise,
   Counterclockwise
 }
 
-export class Vector2 {
+export class Vector2 implements Stringifiable {
   constructor(public x: number, public y: number) { }
 
   public add(other: Vector2): Vector2 {
@@ -34,6 +35,10 @@ export class Vector2 {
     return new Vector2(-this.x, -this.y);
   }
 
+  public asString(): string {
+    return `(${this.x}, ${this.y})`;
+  }
+
   public static Right(): Vector2 {
     return new Vector2(1, 0);
   }
@@ -50,7 +55,7 @@ export class Vector2 {
     return new Vector2(0, 1);
   }
 
-  public static forEach(callback: (direction: Vector2) => void): void {
+  public static forEachDirection(callback: (direction: Vector2) => void): void {
     callback(Vector2.Up());
     callback(Vector2.Right());
     callback(Vector2.Down());
