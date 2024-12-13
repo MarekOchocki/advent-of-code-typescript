@@ -20,6 +20,10 @@ export class Vector2 implements Stringifiable {
     return new Vector2(this.x / divisor, this.y / divisor);
   }
 
+  public multiply(multiplier: number): Vector2 {
+    return new Vector2(this.x * multiplier, this.y * multiplier);
+  }
+
   public equals(other: Vector2): boolean {
     return this.x === other.x && this.y === other.y;
   }
