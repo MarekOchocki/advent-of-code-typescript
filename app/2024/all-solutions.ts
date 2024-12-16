@@ -13,6 +13,7 @@ import { printSolutions12 } from './solutions/solution12';
 import { printSolutions13 } from './solutions/solution13';
 import { printSolutions14 } from './solutions/solution14';
 import { printSolutions15 } from './solutions/solution15';
+import { printSolutions16 } from './solutions/solution16';
 
 function printSolution(day: number, solution: () => void): void {
   console.log(`\nDay ${day}`);
@@ -35,7 +36,8 @@ export function printAll2024Solutions() {
     printSolutions12,
     printSolutions13,
     printSolutions14,
-    printSolutions15
+    printSolutions15,
+    printSolutions16
   ]
   console.log(`\n----------------- Edition 2024: `);
   solutions.forEach((sol, i) => printSolution(i + 1, sol));
