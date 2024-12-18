@@ -182,7 +182,7 @@ class ReverseProcessor {
   }
 
   getSmallestAThatProduces(output: number[]): bigint | undefined {
-    const initAValues = this.findAllAValuesInCacheThatProduce(output.pop()!);
+    const initAValues = this.findAllAValuesInCacheThatProduceWithHighestBitsSet(output.pop()!, 0n);
     const reversedOutput = [...output].reverse();
     const results = initAValues.map(potentialAValue => this.getSmallestAThatProducesWithHighestBitsSet(reversedOutput, (potentialAValue & 127n)));
     const filteredResults = results.filter(s => s !== undefined);
@@ -204,21 +204,11 @@ class ReverseProcessor {
     return fullResults.at(0);
   }
 
-  private findAllAValuesInCacheThatProduce(outputNumber: number): bigint[] {
-    let result: bigint[] = [];
-    for(let i = 0; i < this.cache.length; i++) {
-      if(this.cache[i] === outputNumber) {
-        result.push(BigInt(i));
-      }
-    }
-    return result;
-  }
-
   private findAllAValuesInCacheThatProduceWithHighestBitsSet(outputNumber: number, highest7Bits: bigint): bigint[] {
     let result: bigint[] = [];
-    for(let i = 0; i < this.cache.length; i++) {
-      const rotatedVal = BigInt(i >> 3);
-      if(this.cache[i] === outputNumber && rotatedVal === highest7Bits) { // TODO: can be optimized
+    for(let i = (highest7Bits << 3n); i < (highest7Bits << 3n) + 8n; i++) {
+      const rotatedVal = i >> 3n;
+      if(this.cache[Number(i)] === outputNumber && rotatedVal === highest7Bits) {
         result.push(BigInt(i));
       }
     }
