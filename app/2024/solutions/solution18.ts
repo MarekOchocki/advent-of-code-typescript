@@ -104,14 +104,14 @@ class Maze {
   }
 }
 
-export function printSolutions18Part1(): void {
+function printSolutions18Part1(): void {
   const input = fs.readFileSync('./app/2024/res/input18.txt').toString();
   const maze = new Maze(input, new Vector2(71, 71));
   maze.corrupt(1024);
   console.log(maze.getMinimumNumberOfSteps());
 }
 
-export function printSolutions18Part2(): void {
+function printSolutions18Part2(): void {
   const input = fs.readFileSync('./app/2024/res/input18.txt').toString();
   const maze = new Maze(input, new Vector2(71, 71));
 
