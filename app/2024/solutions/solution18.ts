@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import { Matrix } from '../../utils/Matrix';
 import { Rotation, Vector2 } from '../../utils/Vector2';
 import { binarySearchThroughIntegers } from '../../utils/binary-search';
+import { CircularBuffer } from '../../utils/CircularBuffer';
 
 class MazeTile {
   private score = -1;
@@ -42,8 +43,6 @@ class Maze {
       const [left, right] = line.split(',');
       return new Vector2(+left, +right);
     });
-
-    this.traverseMaze(new Vector2(0, 0));
   }
 
   getMaxBytesCorruptions(): number {
@@ -76,18 +75,20 @@ class Maze {
   private traverseMaze(startPosition: Vector2) {
     const startTile = this.mazeGrid.get(startPosition)!;
     startTile.setScore(0);
-    let movesToCheck: Move[] = [
-      {from: startPosition, direction: Vector2.Up(), scoreAfterMove: 1},
-      {from: startPosition, direction: Vector2.Right(), scoreAfterMove: 1},
-      {from: startPosition, direction: Vector2.Down(), scoreAfterMove: 1},
-      {from: startPosition, direction: Vector2.Left(), scoreAfterMove: 1},
-    ];
 
-    let move = movesToCheck.pop();
-    while(move !== undefined) {
-      const newMoves = this.checkMove(move);
-      movesToCheck = [...newMoves, ...movesToCheck]; // TODO: optimize with better data structure
-      move = movesToCheck.pop();
+    const movesToCheck = new CircularBuffer<Move>(400);
+    movesToCheck.pushBack({from: startPosition, direction: Vector2.Left(), scoreAfterMove: 1});
+    movesToCheck.pushBack({from: startPosition, direction: Vector2.Down(), scoreAfterMove: 1});
+    movesToCheck.pushBack({from: startPosition, direction: Vector2.Right(), scoreAfterMove: 1});
+    movesToCheck.pushBack({from: startPosition, direction: Vector2.Up(), scoreAfterMove: 1});
+
+    let move : Move | null = null;
+    while(movesToCheck.getSize() !== 0) {
+      move = movesToCheck.popFront();
+      const newMoves = this.checkMove(move as Move);
+      for(const newMove of newMoves) {
+        movesToCheck.pushBack(newMove);  
+      }
     }
   }
 
@@ -104,14 +105,14 @@ class Maze {
   }
 }
 
-function printSolutions18Part1(): void {
+function printSolution18Part1(): void {
   const input = fs.readFileSync('./app/2024/res/input18.txt').toString();
   const maze = new Maze(input, new Vector2(71, 71));
   maze.corrupt(1024);
   console.log(maze.getMinimumNumberOfSteps());
 }
 
-function printSolutions18Part2(): void {
+function printSolution18Part2(): void {
   const input = fs.readFileSync('./app/2024/res/input18.txt').toString();
   const maze = new Maze(input, new Vector2(71, 71));
 
@@ -128,6 +129,6 @@ function printSolutions18Part2(): void {
 }
 
 export function printSolutions18(): void {
-  printSolutions18Part1();
-  printSolutions18Part2();
+  printSolution18Part1();
+  printSolution18Part2();
 }
